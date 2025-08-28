@@ -1,11 +1,7 @@
-# app.py
 import streamlit as st
 import difflib
 import random
-import io
-from textwrap import wrap
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
+from io import StringIO
 
 # ---------- Page + Styling ----------
 st.set_page_config(page_title="Tech Trope Romance Generator", page_icon="💘", layout="centered")
@@ -31,6 +27,10 @@ h1, h2, h3 {
     letter-spacing: 0.4px;
 }
 
+.sidebar .sidebar-content {
+    background: #fff7fb !important;
+}
+
 .pink-accent {
     border-left: 4px solid var(--pink-strong);
     background: #fff7fb;
@@ -54,7 +54,7 @@ h1, h2, h3 {
     box-shadow: 0 6px 24px rgba(255, 138, 184, 0.55);
 }
 
-textarea, .stTextInput>div>div>input {
+textarea, .stTextInput>div>div>input, .stSelectbox [data-baseweb="select"] > div {
     font-family: 'JetBrains Mono', monospace !important;
 }
 </style>
@@ -115,7 +115,6 @@ aliases = {
     "secret romance": {"secret romance", "secret", "hidden", "covert"},
 }
 
-# ---------- Helpers ----------
 def pick_story(user_text: str):
     s = user_text.strip().casefold()
     for canon, names in aliases.items():
@@ -131,43 +130,13 @@ def personalize(text: str, y_name: str, t_name: str):
     s = text
     if t_name:
         s = s.replace("T/N", t_name)
+    # Light-touch Y/N replacement: only leading "You " or "You and "
     if y_name:
         if s.startswith("You and "):
             s = s.replace("You and ", f"{y_name} and ", 1)
         elif s.startswith("You "):
             s = s.replace("You ", f"{y_name} ", 1)
     return s
-
-def build_pdf(title: str, body: str) -> io.BytesIO:
-    """Create a simple, wrapped, multi-page PDF and return as BytesIO."""
-    buf = io.BytesIO()
-    c = canvas.Canvas(buf, pagesize=letter)
-    width, height = letter
-    margin_x = 72  # 1 inch
-    top_y = height - 72
-
-    # Title
-    c.setFont("Helvetica-Bold", 16)
-    c.drawString(margin_x, top_y, title)
-
-    # Body
-    c.setFont("Helvetica", 11)
-    y = top_y - 28
-    # Basic wrapping by chars; simple and reliable for prose
-    for para in body.split("\n"):
-        lines = wrap(para, 90)
-        for line in lines:
-            c.drawString(margin_x, y, line)
-            y -= 14
-            if y < 72:
-                c.showPage()
-                c.setFont("Helvetica", 11)
-                y = top_y
-        y -= 6  # paragraph spacing
-
-    c.save()
-    buf.seek(0)
-    return buf
 
 # ---------- UI ----------
 st.title("Tech Trope Romance Generator 💘")
@@ -182,6 +151,7 @@ with col1:
     )
 with col2:
     st.write("")  # spacing
+    st.write("")
 
 user_free = ""
 if choice == "type my own":
@@ -208,16 +178,16 @@ if gen:
             st.stop()
 
     story_out = personalize(story, y_name.strip(), t_name.strip())
-
     st.subheader(canon.title())
     st.markdown(f"<div class='pink-accent'>{story_out}</div>", unsafe_allow_html=True)
 
-    # --- PDF Download ---
-    pdf_bytes = build_pdf(canon.title(), story_out)
+    # Download
+    buf = StringIO()
+    buf.write(f"{canon.title()}\n\n{story_out}")
     st.download_button(
-        "Download Story (.pdf)",
-        data=pdf_bytes,
-        file_name=f"{canon.replace(' ', '_')}.pdf",
-        mime="application/pdf"
+        "Download Story (.txt)",
+        data=buf.getvalue().encode("utf-8"),
+        file_name=f"{canon.replace(' ', '_')}.txt",
+        mime="text/plain"
     )
 
