@@ -185,8 +185,8 @@ if gen:
     buf = StringIO()
     buf.write(f"{canon.title()}\n\n{story_out}")
     st.download_button(
-        "Download Story (.txt)",
+        "Download Story (.pdf)",
         data=buf.getvalue().encode("utf-8"),
-        file_name=f"{canon.replace(' ', '_')}.txt",
+        file_name=f"{canon.replace(' ', '_')}.pdf",
         mime="text/plain"
     )
