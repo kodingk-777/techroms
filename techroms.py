@@ -140,7 +140,7 @@ def personalize(text: str, y_name: str, t_name: str):
 
 # ---------- UI ----------
 st.title("Tech Trope Romance Generator 💘")
-st.caption("Case-insensitive, alias-friendly. Pink, techy, and ready to ship.")
+st.caption("Case-insensitive, alias-friendly.")
 
 col1, col2 = st.columns([2,1])
 with col1:
