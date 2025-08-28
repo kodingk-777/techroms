@@ -182,11 +182,35 @@ if gen:
     st.markdown(f"<div class='pink-accent'>{story_out}</div>", unsafe_allow_html=True)
 
     # Download
-    buf = StringIO()
-    buf.write(f"{canon.title()}\n\n{story_out}")
+       # Download as PDF
+    pdf_buffer = io.BytesIO()
+    c = canvas.Canvas(pdf_buffer, pagesize=letter)
+    width, height = letter
+
+    # Title
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(72, height - 72, canon.title())
+
+    # Story body (wrap to lines)
+    from textwrap import wrap
+    c.setFont("Helvetica", 11)
+    y = height - 100
+    for line in wrap(story_out, 90):  # 90 chars wide
+        c.drawString(72, y, line)
+        y -= 14
+        if y < 72:  # new page if we hit bottom
+            c.showPage()
+            c.setFont("Helvetica", 11)
+            y = height - 72
+
+    c.save()
+    pdf_buffer.seek(0)
+
     st.download_button(
         "Download Story (.pdf)",
-        data=buf.getvalue().encode("utf-8"),
+        data=pdf_buffer,
         file_name=f"{canon.replace(' ', '_')}.pdf",
-        mime="text/plain"
+        mime="application/pdf"
+    )
+
     )
